@@ -1,7 +1,9 @@
 package tasks;
 
+import com.oracle.svm.core.annotate.Delete;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -78,6 +80,57 @@ public class TaskController {
             LocalDateTime updated_at
     ) {
 
+    }
+
+
+    @PutMapping("{task_id}")
+    public UpdateTaskOutput update(@PathVariable Long task_id, @RequestBody UpdateTaskInput in) {
+
+        return new UpdateTaskOutput(
+                task_id,
+                in.title(),
+                "Implementar sistema de login e registro de usuários. ",
+                in.status(),
+                LocalDate.of(2024, 7, 20),
+                1L,
+                1L,
+                LocalDateTime.of(2024, 7, 17, 0, 0, 0),
+                LocalDateTime.now()
+        );
+
+    }
+
+    public record UpdateTaskInput(
+            String title,
+            String status
+    ) {
+    }
+
+    public record UpdateTaskOutput(
+            Long id,
+            String title,
+            String description,
+            String status,
+            LocalDate due_date,
+            Long assigned_id,
+            Long project_id,
+            LocalDateTime created_at,
+            LocalDateTime updated_at
+    ) {
+    }
+
+    @DeleteMapping("{task_id}")
+    public DeleteTaskOutput delete(@PathVariable Long task_id) {
+
+        return new DeleteTaskOutput(
+                "Task deleted successfully"
+        );
+
+    }
+
+    public record DeleteTaskOutput(
+            String message
+    ) {
     }
 }
 
