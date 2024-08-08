@@ -1,9 +1,9 @@
 package tasks;
 
-import com.oracle.svm.core.annotate.Delete;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -11,20 +11,26 @@ import java.time.LocalDateTime;
 @RequestMapping("tasks")
 public class TaskController {
 
-    @PostMapping
-    public CreateTaskOutput post(@RequestBody CreateTaskInput in) {
+    private final JdbcTemplate jdbcTemplate;
 
-        return new CreateTaskOutput(
-                1L,
+    public TaskController(final JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    @PostMapping
+    public GetTaskByIdOutput post(@RequestBody CreateTaskInput in) {
+
+        final var id = jdbcTemplate.update(
+                "INSERT INTO tasks(title, description, status, due_date, assigned_id, project_id) VALUES (?, ?, ?, ?, ?, ?)",
                 in.title(),
                 in.description(),
                 "a fazer",
                 in.due_date(),
                 in.assigned_id(),
-                in.project_id(),
-                LocalDateTime.now(),
-                LocalDateTime.now()
+                in.project_id()
         );
+
+        return getById((long) id);
 
     }
 
@@ -38,32 +44,25 @@ public class TaskController {
     ) {
     }
 
-    public record CreateTaskOutput(
-            Long id,
-            String title,
-            String description,
-            String status,
-            LocalDateTime due_date,
-            Long assigned_id,
-            Long project_id,
-            LocalDateTime created_at,
-            LocalDateTime updated_at
-    ) {
-    }
-
     @GetMapping("{task_id}")
     public GetTaskByIdOutput getById(@PathVariable Long task_id) {
 
-        return new GetTaskByIdOutput(
-                task_id,
-                "Implementar autenticação",
-                "Implementar sistema de login e registro de usuários. ",
-                "a fazer",
-                LocalDate.of(2024, 7, 20),
-                1L,
-                1L,
-                LocalDateTime.of(2024, 7, 17, 0, 0, 0),
-                LocalDateTime.of(2024, 7, 17, 0, 0, 0)
+        final RowMapper<GetTaskByIdOutput> rowMapper = (rs, i) -> new GetTaskByIdOutput(
+                rs.getLong("id"),
+                rs.getString("title"),
+                rs.getString("description"),
+                rs.getString("status"),
+                rs.getObject("due_date", LocalDate.class),
+                rs.getLong("assigned_id"),
+                rs.getLong("project_id"),
+                rs.getObject("created_at", LocalDateTime.class),
+                rs.getObject("updated_at", LocalDateTime.class)
+        );
+
+        return jdbcTemplate.queryForObject(
+                "SELECT * FROM tasks WHERE id=?",
+                rowMapper,
+                task_id
         );
 
     }
@@ -82,21 +81,19 @@ public class TaskController {
 
     }
 
-
     @PutMapping("{task_id}")
-    public UpdateTaskOutput update(@PathVariable Long task_id, @RequestBody UpdateTaskInput in) {
+    public GetTaskByIdOutput update(@PathVariable Long task_id, @RequestBody UpdateTaskInput in) {
 
-        return new UpdateTaskOutput(
-                task_id,
+        final var id = jdbcTemplate.update(
+                "UPDATE tasks SET title = ?, status= ?, updated_at = ? WHERE id = ?",
                 in.title(),
-                "Implementar sistema de login e registro de usuários. ",
                 in.status(),
-                LocalDate.of(2024, 7, 20),
-                1L,
-                1L,
-                LocalDateTime.of(2024, 7, 17, 0, 0, 0),
-                LocalDateTime.now()
+                "a fazer",
+                LocalDateTime.now(),
+                task_id
         );
+
+        return getById(task_id);
 
     }
 
@@ -106,21 +103,10 @@ public class TaskController {
     ) {
     }
 
-    public record UpdateTaskOutput(
-            Long id,
-            String title,
-            String description,
-            String status,
-            LocalDate due_date,
-            Long assigned_id,
-            Long project_id,
-            LocalDateTime created_at,
-            LocalDateTime updated_at
-    ) {
-    }
-
     @DeleteMapping("{task_id}")
     public DeleteTaskOutput delete(@PathVariable Long task_id) {
+
+        jdbcTemplate.update("DELETE FROM tasks WHERE id=?", task_id);
 
         return new DeleteTaskOutput(
                 "Task deleted successfully"

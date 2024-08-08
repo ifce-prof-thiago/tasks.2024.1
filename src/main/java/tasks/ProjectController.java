@@ -1,5 +1,6 @@
 package tasks;
 
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -8,12 +9,24 @@ import java.time.LocalDateTime;
 @RequestMapping("projects")
 public class ProjectController {
 
+    private final JdbcTemplate jdbcTemplate;
+
+    public ProjectController(final JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
     @PostMapping
     public CreateProjectOutput post(@RequestBody CreateProjectInput in) {
 
+        final var id = jdbcTemplate.update(
+                "INSERT INTO projects(name, description) VALUES (?, ?)",
+                in.name(),
+                in.description()
+        );
+
         return new CreateProjectOutput(
-                1L,
-                in.title(),
+                (long) id,
+                in.name(),
                 in.description(),
                 LocalDateTime.now(),
                 LocalDateTime.now()
@@ -22,7 +35,7 @@ public class ProjectController {
     }
 
     public record CreateProjectInput(
-            String title,
+            String name,
             String description,
             String status,
             LocalDateTime due_date,

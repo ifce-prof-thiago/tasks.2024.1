@@ -1,16 +1,30 @@
 package tasks;
 
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("permissions")
 public class PermissionController {
 
+    private final JdbcTemplate jdbcTemplate;
+
+    public PermissionController(final JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
     @PostMapping
     public CreatePermissionOutput post(@RequestBody CreatePermissionInput in) {
 
+        final var id = jdbcTemplate.update(
+                "INSERT INTO permissions(user_id, project_id, role) VALUES (?, ?, ?)",
+                in.user_id(),
+                in.project_id(),
+                in.role()
+        );
+
         return new CreatePermissionOutput(
-                1L,
+                (long) id,
                 in.user_id(),
                 in.project_id,
                 in.role()
