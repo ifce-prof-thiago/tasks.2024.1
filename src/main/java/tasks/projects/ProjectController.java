@@ -1,4 +1,4 @@
-package tasks;
+package tasks.projects;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -37,10 +37,7 @@ public class ProjectController {
     public record CreateProjectInput(
             String name,
             String description,
-            String status,
-            LocalDateTime due_date,
-            Long assigned_id,
-            Long project_id
+            String status
     ) {
     }
 

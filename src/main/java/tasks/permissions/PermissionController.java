@@ -1,4 +1,4 @@
-package tasks;
+package tasks.permissions;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
